@@ -1,0 +1,49 @@
+package GUI;
+
+import Producers.Android;
+import Producers.Building;
+import Producers.Producer;
+
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+public class AccessListener {
+    private final HashMap<Producer, JButton> communityUIMap;
+
+    AccessListener() {
+        communityUIMap = new HashMap<>();
+    }
+
+    public void setAssignButtonsEnable(boolean isSelectionEmpty,
+                                       ArrayList<Android> currentSelectedList) {
+        if (isSelectionEmpty) communityUIMap.values()
+                .forEach(jButton -> jButton.setEnabled(false));
+        else checkAndToggleButtons(currentSelectedList);
+    }
+
+    private void checkAndToggleButtons(ArrayList<Android> currentSelectedList) {
+        communityUIMap.forEach((producer, hireButton)->{
+            ArrayList<Android> workersList = producer.getAndroids();
+            boolean check = workersList != currentSelectedList;
+            if(producer.getAndroidUnion() instanceof Building)
+                check = check  && producer.isBuilt();
+            hireButton.setEnabled(check);
+        });
+    }
+
+    public void setEnableNextButtons(ArrayList<PseudoSpinner> pseudoSpinners,
+                                     ArrayList<Android> freeList) {
+        boolean isHireAvailable = !freeList.isEmpty();
+        pseudoSpinners.forEach(pseudoSpinner ->
+                pseudoSpinner
+                        .getUi()
+                        .getNextStepButton()
+                        .setEnabled(isHireAvailable));
+    }
+
+    public HashMap<Producer, JButton> getCommunityUIMap() {
+        return communityUIMap;
+    }
+}
+
