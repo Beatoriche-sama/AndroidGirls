@@ -1,0 +1,90 @@
+package Producers;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.Objects;
+
+public class Android {
+    private String name, version, info;
+    private BufferedImage icon;
+
+    private Stats gatheringSkill, gardeningSkill, alchemySkill, mechanicSkill;
+
+    public enum StatType {
+        GATHERING, GARDENING, ALCHEMY, MECHANIC;
+    }
+
+    static class Stats {
+        private int skillValue;
+
+        Stats(int skillName) {
+            this.skillValue = skillName;
+        }
+
+        public int getSkillValue() {
+            return skillValue;
+        }
+
+        public void setSkillValue(int skillValue) {
+            this.skillValue = skillValue;
+        }
+    }
+
+    public Android() {
+        this.gatheringSkill = new Stats(1);
+        this.gardeningSkill = new Stats(1);
+        this.mechanicSkill = new Stats(1);
+        this.alchemySkill = new Stats(1);
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setInfo(String info) {
+        this.info = info;
+    }
+
+    public String getInfo() {
+        return info;
+    }
+
+    public void setIcon(int iconNumber) {
+        try {
+            this.icon = ImageIO.read(Objects.requireNonNull(this
+                    .getClass().getResource("/pics/image" + iconNumber + ".png")));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public BufferedImage getIcon() {
+        return icon;
+    }
+
+
+    public int getStatValue(StatType statType) {
+        Stats skill;
+        switch (statType) {
+            case GATHERING -> skill = gatheringSkill;
+            case GARDENING -> skill = gardeningSkill;
+            case MECHANIC -> skill = mechanicSkill;
+            case ALCHEMY -> skill = alchemySkill;
+            default -> throw new IllegalStateException("Unexpected value: " + statType);
+        }
+        return skill.getSkillValue();
+    }
+}
