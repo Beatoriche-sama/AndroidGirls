@@ -1,0 +1,161 @@
+package Main;
+
+import GUI.MainScreen;
+import Producers.*;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+public class App {
+    private final MainScreen gui;
+    private final DataStorage dataStorage;
+    public static final String
+            saveData = "saveData",
+            producersKeyName = "producers",
+            resourcesKeyName = "resources",
+            freeCommunityKeyName = "free androids",
+            knowledgeKeyName = "knowledge",
+            energyKeyName = "energy";
+    private ScheduledExecutorService service;
+    private ArrayList<GameEvent> gameEvents;
+
+    public static void main(String[] args) {
+        new App();
+    }
+
+    public App() {
+        dataStorage = new DataStorage();
+        loadData();
+
+        gui = new MainScreen(dataStorage);
+        gui.setContentPane(gui.createContentPane());
+        gui.pack();
+        gui.setVisible(true);
+        /*
+        gui.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent windowEvent) {
+                saveData();
+                System.exit(0);
+            }
+        });
+        */
+        startTimer();
+    }
+
+    private void loadData() {
+        try {
+            Map<Object, Object> saveData = FileManage.mapLoad(App.saveData);
+            dataStorage.producers = (ArrayList<Producer>) saveData.get(App.producersKeyName);
+            dataStorage.resources = (ArrayList<Resource>) saveData.get(App.resourcesKeyName);
+            dataStorage.setFree((Producer) saveData.get(freeCommunityKeyName));
+            dataStorage.setKnowledge((Resource) saveData.get(knowledgeKeyName));
+            dataStorage.setEnergy((Resource) saveData.get(energyKeyName));
+
+            Android android = createAndroidTest();
+            dataStorage.free.getAndroidUnion().addMember(android);
+
+            /*gameEvents = (ArrayList<GameEvent>) saveData.get(gameEventsFileName);
+            boolean condition = dataStorage.energy.getValue() == 0;
+            Runnable runnable = ()-> {
+                service.shutdown();
+                //message dialog
+            };
+            GameEvent energyEvent = new GameEvent(condition, runnable);*/
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Android createAndroidTest() {
+        Android android = new Android();
+        Random random = new Random();
+
+        String[] names = {"Lily", "Hanako", "Rin", "Emmy", "Shizune", "Misha"};
+        int idx = random.nextInt(names.length);
+        android.setName(names[idx]);
+
+        String[] info1 = {"Wants", "Loves", "Dreams about", "Singing about"};
+        String[] info2 = {"sweet", "magical", "hentai", "brave"};
+        String[] info3 = {"castle", "kitten", "book", "cutlets"};
+        int ind1 = random.nextInt(info1.length);
+        int ind2 = random.nextInt(info2.length);
+        int ind3 = random.nextInt(info3.length);
+        android.setInfo(info1[ind1] + " " + info2[ind2] + " " + info3[ind3] + ".");
+
+        android.setIcon(random.nextInt((5 - 1) + 1) + 1);
+        android.setVersion("n337");
+        return android;
+    }
+
+    private void saveData() throws IOException {
+        Map<String, Object> map = new HashMap<>();
+        map.put(App.resourcesKeyName,dataStorage.resources);
+        map.put(App.producersKeyName, dataStorage.producers);
+        map.put(App.freeCommunityKeyName, dataStorage.getFree());
+        map.put(App.knowledgeKeyName, dataStorage.getKnowledge());
+        map.put(App.energyKeyName, dataStorage.getEnergy());
+        FileManage.mapSave(App.saveData, map);
+    }
+
+    private void startTimer() {
+        Runnable workTask = () -> dataStorage.producers.stream()
+                .filter(Producer::isWorkAllowed)
+                .forEach(Producer::produce);
+
+        Runnable updateUITask = () -> gui.resourceLabelMap
+                .forEach((resource, jLabel) ->
+                        jLabel.setText(String.valueOf((int) resource.getValue())));
+
+        Runnable eventsTask = () -> gameEvents.stream()
+                .filter(gameEvent -> !gameEvent.isCompleted())
+                .forEach(GameEvent::checkAndStart);
+
+        service = Executors.newSingleThreadScheduledExecutor();
+        service.scheduleWithFixedDelay(() -> {
+            workTask.run();
+            updateUITask.run();
+            //eventsTask.run();
+        }, 0, 1, TimeUnit.SECONDS);
+    }
+
+    private void restartGame() {
+        service.shutdown();
+        loadData();
+        gui.setContentPane(gui.createContentPane());
+        startTimer();
+    }
+
+    /*
+    public void win() {
+        ImageIcon icon = new ImageIcon(getClass().getResource("/goodbye.png"));
+        UIManager.put("OptionPane.okButtonText", "All hail technocracy!!");
+        JOptionPane.showConfirmDialog(frame, "Теперь девочка обязательно выживет!", "Спасибо, хозяин",
+                JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, icon);
+    }
+    public void badEndmessage() throws IOException {
+        System.out.println("Конец игры.");
+        UIManager.put("OptionPane.yesButtonText", "Помочь мечте андроидов сбыться в новой реальности");
+        UIManager.put("OptionPane.noButtonText", "Оставить этот умирающий мир");
+        int result = JOptionPane.showConfirmDialog(null,
+                "Няша, твоя рабыня навеки застыла без энергии." +
+                        " Сейчас ее программное обеспечение связи с параллельным миром отключится.",
+                "Конец реальности", JOptionPane.YES_NO_OPTION);
+        if (result == JOptionPane.YES_OPTION) {
+            restart();
+            startGame();
+        }
+        if (result == JOptionPane.NO_OPTION) {
+            fileManage.deleteDirectory(new File("C:/Users/User/Documents/NyanData"));
+            System.exit(0);
+        }
+    }
+     */
+}
