@@ -1,0 +1,5 @@
+package game_object.item;
+
+public enum ITEM_TYPE {
+    ORGANIC, METAL, CHEMICAL, UNIDENTIFIED, BLUEPRINT, ELECTRICITY, MINERAL
+}
